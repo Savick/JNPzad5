@@ -1,0 +1,145 @@
+Zaimplementuj szablon klasy PriorityQueue<K, V> realizujący strukturę danych umożliwiającą wykonywanie następujących operacji (w nawiasach kwadratowych podana jest maksymalna wymagana złożoność czasowa):
+PriorityQueue()
+konstruktor bezparametrowy [O(1)];
+PriorityQueue(PriorityQueue<K, V> const & queue)
+konstruktor kopiujący [O(queue.size())];
+PriorityQueue<K, V> & operator=(PriorityQueue<K, V> const & queue)
+operator przypisania [O(queue.size())];
+bool empty() const
+metoda zwracająca true wtw, gdy kolejka jest pusta [O(1)];
+size_type size() const
+metoda zwracająca liczbę par klucz – wartość przechowywanych w kolejce [O(1)];
+void insert(K const & key, V const & value)
+metoda wstawiająca do kolejki parę o kluczu key i wartości value [O(log size())];
+V const & minValue() const
+V const & maxValue() const
+
+metody zwracające odpowiednio najmniejszą i największą wartość przechowywaną w kolejce [O(1)]; w przypadku wywołania którejś z tych metod na pustej strukturze, powinien zostać zgłoszony wyjątek PriorityQueueEmptyException;
+K const & minKey() const
+K const & maxKey() const
+
+metody zwracające klucz o przypisanej odpowiednio najmniejszej lub największej wartości [O(1)]; w przypadku wywołania którejś z tych metod na pustej strukturze, powinien zostać zgłoszony wyjątek PriorityQueueEmptyException;
+void deleteMin()
+void deleteMax()
+
+metody usuwające z kolejki parę o odpowiednio najmniejszej lub największej wartości [O(log size())];
+void changeValue(K const & key, V const & value)
+metoda zmieniająca dotychczasową wartość przypisaną kluczowi key na nową wartość value [O(log size())]; w przypadku gdy w kolejce nie ma pary o kluczu key, powinien zostać zgłoszony wyjątek PriorityQueueNotFoundException();
+void merge(PriorityQueue<K, V> & queue)
+metoda scalająca zawartość kolejki z podaną kolejką queue; ta operacja usuwa wszystkie elementy z kolejki queue i wstawia je do kolejki *this [O(queue.size() * log (queue.size() + size()))];
+void swap(PriorityQueue<K, V> & queue)
+metoda zamieniającą zawartość kolejki z podaną kolejką queue (tak jak większość kontenerów w bibliotece standardowej) [O(1)].
+
+Klasa PriorityQueue<K, V> powinna zawierać publiczne definicje typów reprezentujących rozmiar oraz przechowywane klucze i wartości, o nazwach odpowiednio: size_type, key_type, value_type.
+
+Ponadto powinny być możliwe globalne operacje takie jak:
+swap przyjmujący dwie kolejki i zamieniający ich zawartość miejscami,
+porównania ==, !=,
+porównania leksykograficzne kolejek <, >, <=, >=.
+
+Klasa PriorityQueue<K, V> nie może przechowywać w pamięci więcej niż jednej kopii elementu typu K i V. Być może trzeba przyjąć dodatkowe założenia co do typów K i V (np. konstruktor kopiujący i operator przypisania nie mogą zgłosić wyjątku). Należy wtedy udokumentować w tekście źródłowym, jakie dodatkowe wymagania są nakładane na ten typ. Można również spróbować poprawić złożoność obliczeniową w stosunku do podanej wyżej. W tekście źródłowym należy udokumentować złożoność poszczególnych operacji. Czym mniej dodatkowych założeń i czym lepsza złożoność, tym lepsza będzie ocena.
+
+Wymagania niefunkcjonalne i wskazówki:
+Istotą zadania jest zapewnienie najwyższego możliwego poziomu ODPORNOŚCI na wyjątki dla każdej z operacji na kolejce (bez utraty OBOJĘTNOŚCI na wyjątki – patrz kolejny punkt) bez nakładania żadnych wymagań na typy K i V w kwestii zwracanych przez nie wyjątków (oczywiście poza podstawowym wymaganiem, jakie zakładają również kontenery z biblioteki standardowej, zabraniającym zgłaszać wyjątki z destruktora). W szczególności oznacza to, że wszystkie operacje na naszej kolejce mają zapewniać silną gwarancję, a tam, gdzie jest to sensowne i możliwe, dodatkowo gwarancję no-throw (no-throw wymagane jest przede wszystkim dla operacji swap).
+Kolejka powinna być OBOJĘTNA na wyjątki, co oznacza, że jeśli pojawi się jakikolwiek wyjątek, powinien on być propagowany "na zewnątrz" (w szczególności oznacza to, że wszelkie wyjątki zgłoszone przez typy K i V powinny być propagowane na zewnątrz).
+Do implementacji struktury można (a nawet zaleca się) użyć odpowiednich kontenerów z biblioteki standardowej, jednocześnie polegając na ich odporności na wyjątki. Proszę przyjąć, że używamy implementacji STL, w której gwarancja odporności wygląda tak, jak opisał to B. Stroustrup w swojej książce, patrz http://www.research.att.com/~bs/3rd_safe.pdf. W innych dołączonych do tematu czytankach również można znaleźć pomocne informacje o wyjątkach w STL.
+Konstruktor domyślny i kopiujący w kontenerach STL zapewniają silną gwarancję.
+Operator przypisania zapewnia podstawową gwarancję (w zadaniu wymagamy silnej!).
+Wszelkie metody w standardowych kontenerach zadeklarowane jako const dają silną gwarancję.
+W podlinkowanym dodatku do książki B. Stroustrupa, a konkretnie w tabelce mówiącej o gwarancji poszczególnych operacji w podstawowych kontenerach, można by dodać kolumnę set/multiset, która byłaby taka sama jak dla map.
+Pod tym samym odnośnikiem znajdziemy informacje, że metoda erase zapewnia gwarancję no-throw – trzeba mieć na uwadze, że chodzi o wersję przyjmującą iteratory (wersja przyjmująca wartość do usunięcia musi najpierw wyszukać tę wartość w kontenerze, a zatem musi wykorzystać operator porównania, który może przecież zgłosić wyjątek),
+Pod tym samym odnośnikiem możemy zauważyć, że metoda swap dla map, set, multiset itp. zapewnia gwarancję no-throw, gdy copy-of-comparison nie zgłasza wyjątku, zatem jeśli nie definiujemy własnego funktora Compare dla standardowego kontenera, to mamy gwarancję no-throw.
+Przykład użycia:
+
+#include <iostream>
+#include <exception>
+#include <cassert>
+
+#include "PriorityQueue.hh"
+
+int main() {
+PriorityQueue<int, int> Q;
+assert(Q.empty());
+
+Q.insert(1, 42);
+Q.insert(2, 13);
+
+assert(Q.size() == 2);
+assert(Q.maxKey() == 1);
+assert(Q.maxValue() == 42);
+assert(Q.minKey() == 2);
+assert(Q.minValue() == 13);
+
+Q.deleteMax();
+Q.deleteMin();
+Q.deleteMin();
+
+assert(Q.empty());
+
+Q.insert(1, 100);
+Q.insert(2, 100);
+Q.insert(3, 300);
+
+try {
+Q.changeValue(4, 400);
+} catch (PriorityQueueNotFoundException const & pqnfex) {
+std::cout << pqnfex.what() << std::endl;
+} catch (...) {
+assert(! "exception missing!");
+}
+
+Q.changeValue(2, 200);
+
+try {
+while (true) {
+std::cout << Q.minValue() << std::endl;
+Q.deleteMin();
+}
+assert(! "Q.minValue() on empty Q did not throw!");
+} catch (PriorityQueueEmptyException const & pqeex) {
+std::cout << pqeex.what() << std::endl;
+} catch (...) {
+assert(! "exception missing!");
+}
+
+try {
+PriorityQueue<int, int>::key_type k = Q.minKey();
+assert(! "Q.minKey() on empty Q did not throw!");
+} catch (std::exception const & ex) {
+std::cout << ex.what() << std::endl;
+} catch (...) {
+assert(! "exception missing!");
+}
+
+PriorityQueue<int, int> T;
+T.insert(1, 1);
+T.insert(2, 4);
+Q.insert(3, 9);
+Q.insert(4, 16);
+Q.merge(T);
+assert(Q.size() == 4);
+assert(Q.minValue() == 1);
+assert(Q.maxValue() == 16);
+assert(T.empty());
+
+PriorityQueue<int, int> S = Q;
+swap(Q, T);
+assert(T == S);
+
+std::cout << "ALL OK!" << std::endl;
+return 0;
+}
+
+UWAGA! Każda implementacja PriorityQueue<K, V> zostanie sprawdzona zestawem testów z typami, które np. zgłaszają wyjątki ze swoich metod, operatorów itd. (oczywiście poza destruktorem). Symulowane będą też niepowodzenia w alokacji pamięci (bad_alloc). Przejście tych testów będzie podstawą do zaliczenia. Warto zatem spróbować samemu zasymulować takie warunki. Wskazówka, jak to zrobić, znajduje się w jednej z obowiązkowych czytanek.
+
+Ustalenia techniczne
+
+Jako rozwiązanie należy dostarczyć plik PriorityQueue.hh. Plik ten należy umieścić w repozytorium w katalogu
+
+grupaN/zadanie5/ab123456+cd123456
+
+lub
+
+grupaN/zadanie5/ab123456+cd123456+ef123456
+
+gdzie N jest numerem grupy, a ab123456, cd123456, ef123456 są identyfikatorami członków zespołu umieszczającego to rozwiązanie. Katalog z rozwiązaniem nie powinien zawierać innych plików.
