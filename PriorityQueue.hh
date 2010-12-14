@@ -89,7 +89,8 @@ PriorityQueue<K,V>::PriorityQueue(){
 
 template< typename K, typename V>
 void PriorityQueue<K,V>::copyQElement(qElement a){
-   qElement b = std::copy(*a);
+   qElement b = a;//std::copy(*a); //może za copy przemawiała jakaś idea, ale u mnie się\
+sypało, a w tej wersji się nie sypie;]
    keys.insert(b);
    values.insert(b);
 }
@@ -99,14 +100,20 @@ PriorityQueue<K,V>::PriorityQueue(PriorityQueue<K, V> const & queue){
 /*        keys = std::set<qElement,keysOrder>();
         values = std::set<qElement,valuesOrder>();
         // jw. chyba niepotrzebne */
-  std::for_each(queue.keys.begin(),queue.keys.end(),copyQElement); //coś nie działa!!!!!!
+  //std::for_each(queue.keys.begin(),queue.keys.end(),copyQElement); //coś nie działa!!!!!!
+	typename std::multiset<qElement, keysOrder >::const_iterator p = queue.keys.begin();
+	typename std::multiset<qElement, keysOrder >::const_iterator k = queue.keys.end();
+	for ( ; p!=k; ++p ) copyQElement(*p);
 }
 
 template< typename K, typename V>
 PriorityQueue<K,V>& PriorityQueue<K, V>::operator= (PriorityQueue<K, V> const & queue){
   keys.clear(); 
   values.clear(); //TODO mądre kasowanie!
-  std::for_each(queue.keys.begin(),queue.keys.end(),copyQElement); //jw. do przejrzenia
+  //std::for_each(queue.keys.begin(),queue.keys.end(),copyQElement); //jw. do przejrzenia
+	typename std::multiset<qElement, keysOrder >::const_iterator p = queue.keys.begin();
+	typename std::multiset<qElement, keysOrder >::const_iterator k = queue.keys.end();
+	for ( ; p!=k; ++p ) copyQElement(*p);
   return *this;
 }
 
