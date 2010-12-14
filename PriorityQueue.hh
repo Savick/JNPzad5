@@ -147,12 +147,12 @@ V const & PriorityQueue<K,V>::maxValue() const{
 
 template< typename K, typename V>
 K const & PriorityQueue<K,V>::minKey() const{
-   return (*values.begin())->first; //TODO czy to na pewno dobrze?
+   return (*keys.begin())->first; //TODO czy to na pewno dobrze?
 }
 
 template< typename K, typename V>
 K const & PriorityQueue<K,V>::maxKey() const{ //klucz o przypisanej maksymalnej wartości - czyli nie zmieniamy nakeys
-   return (*values.end())->first; //TODO czy to na pewno dobrze?
+   return (*keys.end())->first; //TODO czy to na pewno dobrze?
 }
 
 
