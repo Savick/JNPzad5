@@ -1,4 +1,3 @@
-
 #ifndef PRIORITYQUEUE_H
 #define PRIORITYQUEUE_H
 
@@ -113,7 +112,7 @@ void PriorityQueue<K,V>::copyQElement(qElement a){
      *it = keys.insert(b);
    }
    catch(...){
-     b->~pair(); 
+     //b->~pair(); 
      delete b;
      throw;
    }
@@ -122,7 +121,7 @@ void PriorityQueue<K,V>::copyQElement(qElement a){
    }
    catch(...){
      keys.erase(*it);
-     b->~pair();
+     //b->~pair();
      delete b;
      throw;
    }
@@ -172,7 +171,7 @@ PriorityQueue<K,V>::PriorityQueue(PriorityQueue<K, V> const & queue){
          *vinput = values.insert(*vinput, b);
          if (done == 1) done = 2;
        } catch(...){
-          b->~pair();
+          //b->~pair();
           delete b;
           throw;
        }
@@ -268,7 +267,7 @@ void PriorityQueue<K,V>::insert(K const & key, V const & value){
   try{
     *atkeys = keys.insert(a);
   } catch(...){
-    a->~pair();
+    //a->~pair();
     delete a;
     delete atkeys;
     throw;
@@ -278,7 +277,7 @@ void PriorityQueue<K,V>::insert(K const & key, V const & value){
   }
   catch (...){
     keys.erase(*atkeys);
-    a->~pair();
+    //a->~pair();
     delete a;
     delete atkeys;
     throw;
