@@ -21,6 +21,9 @@ class PriorityQueueNotFoundException: public std::exception {};
 template <typename K, typename V>
 class PriorityQueue;
 
+template <typename K, typename V>
+bool operator==(PriorityQueue<K, V> & queue0, PriorityQueue<K, V> & queue);
+
 
 template <typename K, typename V>
 class PriorityQueue {
@@ -29,11 +32,15 @@ class PriorityQueue {
 
     class keysOrder{ //Klasy służące do porządkowania elementów
       public :
-        bool operator()(const PriorityQueue::qElement & a, const PriorityQueue::qElement & b){
+        bool operator()(const PriorityQueue::qElement & a,
+                        const PriorityQueue::qElement & b) throw()
+        //zakładamy, że K, V nie rzucają wyjątków z porównania (shared_ptr nie rzuca)
+        {
+          //można użyć porównania na parze, ale ze względu na symetrię  jest tak:
           if (a->first < b->first)
             return true;
-          else
-          if (a->second < b->second) //TODO dodać porządek na adresach
+          else if (!(a->first > b->first))
+          if (a->second < b->second)
             return true;
           else
             if (a < b)
@@ -43,12 +50,27 @@ class PriorityQueue {
         }
     } ;
 
-    class valuesOrder{
+    class keysOrder0{ //porównanie standardowe
       public :
-        bool operator()(const PriorityQueue::qElement & a, const PriorityQueue::qElement & b){
-          if (a->second < b->second)
+        bool operator()(const PriorityQueue::qElement & a,
+                        const PriorityQueue::qElement & b) throw(){
+          if (a->first < b->first)
+            return true;
+          else if (!(a->first > b->first))
+          if (a->second < b->second) //TODO dodać porządek na adresach
             return true;
           else
+              return false; //równe czyli nie nierówne
+        }
+    } ;
+
+    class valuesOrder{
+      public :
+        bool operator()(const PriorityQueue::qElement & a,
+                        const PriorityQueue::qElement & b) throw(){
+          if (a->second < b->second)
+            return true;
+          else if (!(a->second > b->second))
             if (a->first < b->first)
               return true;
             else
@@ -100,6 +122,8 @@ class PriorityQueue {
     void merge(PriorityQueue<K, V> & queue);
    
     void swap(PriorityQueue<K, V> & queue);
+
+    friend bool operator==<K,V>(PriorityQueue<K, V> & queue0, PriorityQueue<K, V> & queue);
 } ;
 
 
@@ -159,7 +183,7 @@ bool PriorityQueue<K,V>::empty() const{
   return keys.empty();
 }
 
-template< typename K, typename V>
+template< typename K, typename V> //no-throw??
 typename PriorityQueue<K,V>::size_type PriorityQueue<K,V>::size() const{ 
   return keys.size();
 }
@@ -271,7 +295,7 @@ void PriorityQueue<K,V>::merge(PriorityQueue<K, V> & queue){
 
 
 template< typename K, typename V>
-void PriorityQueue<K,V>::swap(PriorityQueue<K, V> & queue){
+void PriorityQueue<K,V>::swap(PriorityQueue<K, V> & queue) throw(){
   keys.swap(queue.keys);
   values.swap(queue.values);
 }
@@ -298,8 +322,53 @@ void PriorityQueue<K,V>::deleteMax(){
 }
 
 template<typename K, typename V>
-void swap(PriorityQueue<K, V> & queue0, PriorityQueue<K, V> & queue){
+void swap(PriorityQueue<K, V> & queue0, PriorityQueue<K, V> & queue) throw(){
         queue0.swap(queue);
+}
+
+template< typename K, typename V>
+bool operator==(PriorityQueue<K, V> & queue0, PriorityQueue<K, V> & queue){
+  return (!lexicographical_compare (queue0.keys.begin(), queue0.keys.end(),
+                                 queue.keys.begin(), queue.keys.end(),
+                                 keysOrder0)
+          &&
+          !lexicographical_compare (queue.keys.begin(), queue.keys.end(),
+                                 queue0.keys.begin(), queue0.keys.end(),
+                                 keysOrder0))
+ /*można przepisać z użyciem:
+ bool equal ( InputIterator1 first1, InputIterator1 last1,
+               InputIterator2 first2, BinaryPredicate pred );
+               ale po co pisać predykat, jak można nie pisać^^
+ */
+}
+
+template< typename K, typename V>
+bool operator!=(PriorityQueue<K, V> & queue0, PriorityQueue<K, V> & queue){
+  return !(queue0==queue);
+}
+
+template< typename K, typename V>
+bool operator<=(PriorityQueue<K, V> & queue0, PriorityQueue<K, V> & queue){
+  return (queue0 < queue || queue0==queue);
+  //oczywiście można przepisać wprost i będzie optymalniej bo będą 2 porównania\
+    zamiast 3 (dwóch takich samych)
+}
+
+template< typename K, typename V>
+bool operator>=(PriorityQueue<K, V> & queue0, PriorityQueue<K, V> & queue){
+  return queue <= queue0;
+}
+
+template< typename K, typename V>
+bool operator<(PriorityQueue<K, V> & queue0, PriorityQueue<K, V> & queue){
+  return lexicographical_compare (queue0.keys.begin(), queue0.keys.end(),
+                                 queue.keys.begin(), queue.keys.end(),
+                                 keysOrder0)
+}
+
+template< typename K, typename V>
+bool operator>(PriorityQueue<K, V> & queue0, PriorityQueue<K, V> & queue){
+  return queue < queue0;
 }
  
 
