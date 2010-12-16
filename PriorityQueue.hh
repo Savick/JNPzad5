@@ -121,7 +121,7 @@ void PriorityQueue<K,V>::copyQElement(qElement a){
      *it = keys.insert(b);
    }
    catch(...){
-     //b->~pair(); 
+     //b->~pair();
      delete b;
      throw;
    }
@@ -192,16 +192,16 @@ PriorityQueue<K,V>::PriorityQueue(PriorityQueue<K, V> const & queue){
    }
  } //zewnętrzny try
  catch(...){
-   switch (done){
+   /*switch (done){
      case 2: vinput->~two();
      case 1: kinput->~one(); break;
-   }
+   }*/
    delete kinput;
    delete vinput;
    throw;
  }
- vinput->~two();
- kinput->~one();
+ //vinput->~two();
+ //kinput->~one();
  delete kinput;
  delete vinput;
 }
@@ -256,29 +256,32 @@ template< typename K, typename V>
 void PriorityQueue<K,V>::insert(K const & key, V const & value){
   //tu oczywiście też jest za dużo try-catch, ale to jest forma a nie treść.
   qElement a;
-  typename std::multiset<qElement, keysOrder >::iterator *atkeys;
+  typedef typename std::multiset<qElement, keysOrder >::iterator itek;
+  itek atkeys;
   a = new std::pair<K,V>;
-  try{
+  /*try{
     atkeys = new typename std::multiset<qElement, keysOrder >::iterator;
   }
   catch(...){
     delete a;
     throw;
-  }
+  }*/
   try{
     *a = std::make_pair(key, value);
   }
   catch(...){
     delete a;
-    delete atkeys;
+    //atkeys->~itek();
+    //delete atkeys;
     throw;
   }
   try{
-    *atkeys = keys.insert(a);
+    atkeys = keys.insert(a);
   } catch(...){
     //a->~pair();
     delete a;
-    delete atkeys;
+    //atkeys->~itek();
+    //delete atkeys;
     throw;
   }
   try{
@@ -288,11 +291,14 @@ void PriorityQueue<K,V>::insert(K const & key, V const & value){
     keys.erase(*atkeys);
     //a->~pair();
     delete a;
-    delete atkeys;
+    //atkeys->~itek();
+    //delete atkeys;
     throw;
   }
+  //a->~pair();
   delete a;
-  delete atkeys;
+  //atkeys->~itek();
+  //delete atkeys;
   
    /*
    qElement a= new std::pair<K,V>; //po co tworzyć taką pustą parę, skoro za chwilę tworzymy inną?
@@ -374,10 +380,10 @@ void PriorityQueue<K,V>::merge(PriorityQueue<K, V> & queue){
     }
     for(; i>=0; --i){
       keys.erase(*(tabk[i]));
-      tabk[i]->~itek1();
+      //tabk[i]->~itek1();
       delete tabk[i];
       values.erase(*(tabv[i]));
-      tabv[i]->~itek2();
+      //tabv[i]->~itek2();
       delete tabv[i];
     }
     delete[] tabk;
@@ -386,9 +392,9 @@ void PriorityQueue<K,V>::merge(PriorityQueue<K, V> & queue){
   }
   --i; //bo było j.
   for(; i>=0; --i){
-    tabk[i]->~itek1();
+    //tabk[i]->~itek1();
     delete tabk[i];
-    tabv[i]->~itek2();
+    //tabv[i]->~itek2();
     delete tabv[i];
   }
   delete[] tabk;
@@ -399,6 +405,37 @@ template< typename K, typename V>
 void PriorityQueue<K,V>::swap(PriorityQueue<K, V> & queue){
   keys.swap(queue.keys);
   values.swap(queue.values);
+}
+
+template <typename K, typename V>
+void PriorityQueue<K,V>::deleteMin(){ //ślady poprzedniej interpretacji w kodzie
+  if (keys.empty()) throw emptyException;
+ 
+  typedef typename std::multiset<qElement, keysOrder >::iterator itek;
+  //itek *i = new itek;
+  //try{
+  itek i = values.begin();
+  //} catch (...){
+  //  delete i;
+  //}
+  //try{
+    keys.erase(*i); //usuwamy poprzez wartość, może się sypnąć
+  //}
+  /*catch(...){
+    i->~itek(); //to wszystko zbędne, jeżeli robimy bez wskaźników
+    delete i;
+  }*/
+  values.erase(i); //to się już uda, bo usuwamy poprzez iterator
+}
+
+template <typename K, typename V>
+void PriorityQueue<K,V>::deleteMax(){ //wersja bez śladów jak wyżej:
+  if (keys.empty()) throw emptyException;
+
+  typedef typename std::multiset<qElement, keysOrder >::iterator itek;
+  itek i = values.end();
+  keys.erase(*i); //usuwamy poprzez wartość, może się sypnąć
+  values.erase(i); //to się już uda, bo usuwamy poprzez iterator
 }
 
 template<typename K, typename V>
