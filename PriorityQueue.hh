@@ -6,11 +6,10 @@
 #include<algorithm>
 #include<boost/shared_ptr.hpp>
 #include<boost/scoped_ptr.hpp>
+#include<boost/scoped_array.hpp>
 
 // Covention: 2 spaces, no tabs
 #include <exception>
-
-#include <iostream> //chwilowo
 
 class PriorityQueueEmptyException: public std::exception {};
 class PriorityQueueNotFoundException: public std::exception {};
@@ -239,69 +238,36 @@ void PriorityQueue<K,V>::merge(PriorityQueue<K, V> & queue){
   int i,j = queue.size(), done;
   typedef typename std::set<qElement, keysOrder >::iterator itek1;
   typedef typename std::set<qElement, valuesOrder >::iterator itek2;
-  boost::scoped_ptr< itek1 > otherkeys ( new itek1 ); //tę pamięć trzeba będzie zwolnić!
-  //już nie, bo mamy boosta^^
+  itek1 otherkeys;
 
-  itek1** tabk;
-  itek2** tabv;
-  tabk = new itek1* [j]; //może się nie powieść, nie ma problemu
-  try{ //znów będzie nieelegancko z wieloma try
-     tabv = new itek2* [j];
-     //to już się uda:
-     for(i=0; i<j; ++i){
-       tabk[i] = tabv[i] = NULL;
-     }
-  }
-  catch(...){
-    delete [] tabk;
-    throw;
-  }
+  boost::scoped_array < boost::scoped_ptr<itek1> > tabk (new boost::scoped_ptr<itek1>[j]);
+  boost::scoped_array < boost::scoped_ptr<itek2> > tabv (new boost::scoped_ptr<itek2>[j]);
   try{
-    *otherkeys = queue.keys.begin();
+    otherkeys = queue.keys.begin();
     done = 0;
     for(i=0; i<j; ++i){
-      tabk[i] = new itek1;
-      //std::cout << i << ":)cokolwiek" << std::endl;
-      done = 1;
-      *tabk[i]=keys.insert(**otherkeys).first;
+      tabk[i].reset ( new itek1 );
+      *tabk[i]=keys.insert(*otherkeys).first;
       done = 2;
-      //std::cout << i << ":)half" << std::endl;
-      tabv[i] = new itek2;
-      done = 3;
-      *tabv[i]=values.insert(**otherkeys).first;
+      tabv[i].reset( new itek2 );
+      *tabv[i]=values.insert(*otherkeys).first;
       done = 0;
-      ++(*otherkeys);
-      //std::cout << i << ":)!" << std::endl;
+      ++otherkeys;
     }
     //to już jest bezpieczne:
     queue.keys.clear();
-    queue.values.clear(); //do poprawki jak wszystkie usuwania
+    queue.values.clear();
   }
   catch(...){
     switch (done){
-      case 3: delete tabv[i];
       case 2: keys.erase(*(tabv[i]));
-      case 1: delete tabk[i];
       case 0: --i; break;
     }
     for(; i>=0; --i){
       keys.erase(*(tabk[i]));
-      delete tabk[i];
       values.erase(*(tabv[i]));
-      delete tabv[i];
     }
-    delete[] tabk;
-    delete[] tabv;
-    throw;
   }
-
-  --i; //bo było j.
-  for(; i>=0; --i){
-    delete tabk[i];
-    delete tabv[i];
-  }
-  delete[] tabk;
-  delete[] tabv;
 }
 
 
