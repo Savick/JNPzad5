@@ -4,6 +4,7 @@
 #include<set>
 #include<utility>
 #include<algorithm>
+#include "exceptions.hh"
 // Covention: 4 spaces, no tabs
 
 /* TODO
@@ -15,8 +16,6 @@
 template <typename K, typename V>
 class PriorityQueue;
 
-template<typename K, typename V>
-void swap(PriorityQueue<K,V>&, PriorityQueue<K,V>&);
 
 template <typename K, typename V>
 class PriorityQueue {
@@ -32,7 +31,10 @@ class PriorityQueue {
           if (a->second < b->second) //TODO dodać porządek na adresach
             return true;
           else
-            return false;
+            if (a < b)
+              return true;
+            else
+              return false;
         }
     } ;
 
@@ -42,7 +44,13 @@ class PriorityQueue {
           if (a->second < b->second)
             return true;
           else
-            return false;
+            if (a->first < b->first)
+              return true;
+            else
+              if (a < b)
+                return true;
+              else
+                return false;
         }
     } ;
     
@@ -55,6 +63,9 @@ class PriorityQueue {
     std::multiset<qElement, keysOrder > keys;
     std::multiset<qElement, valuesOrder > values;
 
+    PriorityQueueEmptyException emptyException;
+    PriorityQueueNotFoundException notFoundException;
+    
   public :
     typedef K key_type;
     typedef V value_type;
@@ -63,29 +74,27 @@ class PriorityQueue {
     PriorityQueue(); //non-parameter constructor [O(1)];
     PriorityQueue(PriorityQueue<K, V> const & queue); //copy constructor [O(queue.size())];
     PriorityQueue<K, V> & operator=(PriorityQueue<K, V> const & queue);
-    //operator przypisania [O(queue.size())];
+    
     bool empty() const;
-    // metoda zwracająca true wtw, gdy kolejka jest pusta [O(1)];
+    
     size_type size() const;
-    // metoda zwracająca liczbę par klucz – wartość przechowywanych w kolejce [O(1)];
+    
     void insert(K const & key, V const & value);
-    //	metoda wstawiająca do kolejki parę o kluczu key i wartości value [O(log size())];
+    
     V const & minValue() const;
     V const & maxValue() const;
-    //metody zwracające odpowiednio najmniejszą i największą wartość przechowywaną w kolejce [O(1)]; w przypadku wywołania którejś z tych metod na pustej strukturze, powinien zostać zgłoszony wyjątek PriorityQueueEmptyException;
+    
     K const & minKey() const;
     K const & maxKey() const;
-    //	metody zwracające klucz o przypisanej odpowiednio najmniejszej lub największej wartości [O(1)]; w przypadku wywołania którejś z tych metod na pustej strukturze, powinien zostać zgłoszony wyjątek PriorityQueueEmptyException;
+    
     void deleteMin();
     void deleteMax();
-    //	metody usuwające z kolejki parę o odpowiednio najmniejszej lub największej wartości [O(log size())];
+    
     void changeValue(K const & key, V const & value);
-    //metoda zmieniająca dotychczasową wartość przypisaną kluczowi key na nową wartość value [O(log size())]; w przypadku gdy w kolejce nie ma pary o kluczu key, powinien zostać zgłoszony wyjątek PriorityQueueNotFoundException();
+    
     void merge(PriorityQueue<K, V> & queue);
-    //metoda scalająca zawartość kolejki z podaną kolejką queue; ta operacja usuwa wszystkie elementy z kolejki queue i wstawia je do kolejki *this [O(queue.size() * log (queue.size() + size()))];
-    friend void swap<K,V>(PriorityQueue<K, V> & queue0, PriorityQueue<K, V> & queue);
-    //metoda zamieniającą zawartość kolejki z podaną kolejką queue (tak jak większość kontenerów w bibliotece standardowej) [O(1)].
-    //nie metoda tylko funkcja zewnętrzna
+   
+    void swap/*<K,V>*/(PriorityQueue<K, V> & queue);
 } ;
 
 template< typename K, typename V>
@@ -292,26 +301,29 @@ void PriorityQueue<K,V>::insert(K const & key, V const & value){
    values.insert(a);
    */
 }
-
+//TODO: wyjątki
 template< typename K, typename V>
 V const & PriorityQueue<K,V>::minValue() const{
-   return (*values.begin())->second; //TODO czy to na pewno dobrze?
+   if (keys.empty()) throw emptyException;
+   return (*values.begin())->second; 
 }
 
 template< typename K, typename V>
 V const & PriorityQueue<K,V>::maxValue() const{
-   return (*values.end())->second; //TODO czy to na pewno dobrze?
+   if (keys.empty()) throw emptyException;
+   return (*values.end())->second; 
 }
 
 template< typename K, typename V>
 K const & PriorityQueue<K,V>::minKey() const{
-   return (*values.begin())->first; //TODO czy to na pewno dobrze?
+   if (keys.empty()) throw emptyException;
+   return (*values.begin())->first; 
 }
 
 template< typename K, typename V>
-K const & PriorityQueue<K,V>::maxKey() const{ //klucz o przypisanej maksymalnej wartości - czyli nie zmieniamy nakeys
-   return (*values.end())->first; //TODO czy to na pewno dobrze?
-   //nie rozumiem, czemu to ma być ok ?!?!
+K const & PriorityQueue<K,V>::maxKey() const{
+   if (keys.empty()) throw emptyException;
+   return (*values.end())->first; 
 }
 
 template< typename K, typename V>
@@ -384,10 +396,16 @@ void PriorityQueue<K,V>::merge(PriorityQueue<K, V> & queue){
 }
 
 template< typename K, typename V>
-void swap(PriorityQueue<K, V> & queue0, PriorityQueue<K, V> & queue){
-  queue0.keys.swap(queue.keys);
-  queue0.values.swap(queue.values);
+void PriorityQueue<K,V>::swap(PriorityQueue<K, V> & queue){
+  keys.swap(queue.keys);
+  values.swap(queue.values);
 }
+
+template<typename K, typename V>
+void swap(PriorityQueue<K, V> & queue0, PriorityQueue<K, V> & queue){
+        queue0.swap(queue);
+}
+ 
 
 
 
