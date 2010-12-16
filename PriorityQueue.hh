@@ -4,8 +4,13 @@
 #include<set>
 #include<utility>
 #include<algorithm>
-#include "exceptions.hh"
-// Covention: 4 spaces, no tabs
+#include<boost/shared_ptr.hpp>
+
+// Covention: 2 spaces, no tabs
+#include <exception>
+
+class PriorityQueueEmptyException: public std::exception {};
+class PriorityQueueNotFoundException: public std::exception {};
 
 /* TODO
  * boost i jakieś mądre kasowanie obiektów, bo erase wykonane na secie nie załatwia nam sprawy, jeśli chodzi o
@@ -20,7 +25,7 @@ class PriorityQueue;
 template <typename K, typename V>
 class PriorityQueue {
   private :
-    typedef std::pair<K,V>* qElement;
+    typedef boost::shared_ptr< std::pair<K,V> > qElement;
 
     class keysOrder{ //Klasy służące do porządkowania elementów
       public :
@@ -60,8 +65,8 @@ class PriorityQueue {
          */
      
     void copyQElement(qElement a);
-    std::multiset<qElement, keysOrder > keys;
-    std::multiset<qElement, valuesOrder > values;
+    std::set<qElement, keysOrder > keys;
+    std::set<qElement, valuesOrder > values;
 
     PriorityQueueEmptyException emptyException;
     PriorityQueueNotFoundException notFoundException;
@@ -94,8 +99,11 @@ class PriorityQueue {
     
     void merge(PriorityQueue<K, V> & queue);
    
-    void swap/*<K,V>*/(PriorityQueue<K, V> & queue);
+    void swap(PriorityQueue<K, V> & queue);
 } ;
+
+
+//-----------------------------------------------------------------------------------------------------
 
 template< typename K, typename V>
 PriorityQueue<K,V>::PriorityQueue(){
@@ -106,7 +114,7 @@ PriorityQueue<K,V>::PriorityQueue(){
 
 template< typename K, typename V>
 void PriorityQueue<K,V>::copyQElement(qElement a){
-   typename std::multiset<qElement, keysOrder >::iterator *it;
+   typename std::set<qElement, keysOrder >::iterator *it;
    qElement b;
    b = new std::pair<K,V>;
    try{
@@ -141,27 +149,27 @@ PriorityQueue<K,V>::PriorityQueue(PriorityQueue<K, V> const & queue){
 /*        keys = std::set<qElement,keysOrder>();
         values = std::set<qElement,valuesOrder>();
         // jw. chyba niepotrzebne */
-	
-//	std::const_itereator<qElement> p = queue.keys.begin();
- int done = 0;
 
-	typename std::multiset<qElement, keysOrder >::const_iterator p = queue.keys.begin();
-	typename std::multiset<qElement, keysOrder >::const_iterator k = queue.keys.end();
+// std::const_itereator<qElement> p = queue.keys.begin();
+ //int done = 0;
 
- typedef typename std::multiset<qElement, valuesOrder >::iterator two;
- typedef typename std::multiset<qElement, keysOrder >::iterator one;
- 
- one *kinput;
- two *vinput;
- kinput = new one;
+ typename std::set<qElement, keysOrder >::const_iterator p = queue.keys.begin();
+ typename std::set<qElement, keysOrder >::const_iterator k = queue.keys.end();
+
+ typedef typename std::set<qElement, valuesOrder >::iterator two;
+ typedef typename std::set<qElement, keysOrder >::iterator one;
+
+ one kinput;
+ two vinput;
+ /*kinput = new one;
  try{
    vinput = new two;
  }
  catch(...){
    delete kinput;
    throw;
- }
- try{ //obsługa tych k/v-input
+ }*/
+ //try{ //obsługa tych k/v-input
    try{
      for ( ; p!=k; ++p ){
        //fragment niemal żywcem z funkcji copy:
@@ -175,10 +183,10 @@ PriorityQueue<K,V>::PriorityQueue(PriorityQueue<K, V> const & queue){
         throw;
        }//koniec fragmentu
        try{
-         *kinput = keys.insert(*kinput, b);
-         if (done==0) done = 1;
-         *vinput = values.insert(*vinput, b);
-         if (done == 1) done = 2;
+         kinput = keys.insert(kinput, b);
+         //if (done==0) done = 1;
+         vinput = values.insert(vinput, b);
+         //if (done == 1) done = 2;
        } catch(...){
           //b->~pair();
           delete b;
@@ -190,20 +198,20 @@ PriorityQueue<K,V>::PriorityQueue(PriorityQueue<K, V> const & queue){
      values.clear();
      throw;
    }
- } //zewnętrzny try
+ /*} //zewnętrzny try
  catch(...){
-   /*switch (done){
-     case 2: vinput->~two();
-     case 1: kinput->~one(); break;
-   }*/
+ //  switch (done){
+ //    case 2: vinput->~two();
+ //    case 1: kinput->~one(); break;
+ //  }
    delete kinput;
    delete vinput;
    throw;
- }
+ }*/
  //vinput->~two();
  //kinput->~one();
- delete kinput;
- delete vinput;
+ //delete kinput;
+ //delete vinput;
 }
 
 template< typename K, typename V>
@@ -216,23 +224,23 @@ PriorityQueue<K,V>& PriorityQueue<K, V>::operator= (PriorityQueue<K, V> const & 
   /*
   //operator= to prostsza wersja merga - bo w mergu musimy odtwarzać, \
   a tu wystarczy przywrócić poprzedni stan
-  std::multiset<qElement, keysOrder > k2;
-  std::multiset<qElement, valuesOrder > v2;
+  std::set<qElement, keysOrder > k2;
+  std::set<qElement, valuesOrder > v2;
   //jak się powyżej przy alokacji coś wysypie to nie mój problem
   keys.swap(k2);
   values.swap(v2);
   //^ ten fragment się nie wysypie
   try{
-    typename std::multiset<qElement, keysOrder >::const_iterator p = queue.keys.begin();
-    typename std::multiset<qElement, keysOrder >::const_iterator k = queue.keys.end();
+    typename std::set<qElement, keysOrder >::const_iterator p = queue.keys.begin();
+    typename std::set<qElement, keysOrder >::const_iterator k = queue.keys.end();
     for ( ; p!=k; ++p ) copyQElement(*p);
     //to już bezpieczne:
     k2.clear();
     v2.clear(); //TODO mądre kasowanie!
   }
   catch (...){
-    std::multiset<qElement, keysOrder >.swap(keys,k2);
-    std::multiset<qElement, valuesOrder >.swap(values,v2);
+    std::set<qElement, keysOrder >.swap(keys,k2);
+    std::set<qElement, valuesOrder >.swap(values,v2);
     k2.clear();
     v2.clear(); //czy to jest w ogóle potrzebne czy destruktor sam się odpali?
     throw;
@@ -248,17 +256,16 @@ bool PriorityQueue<K,V>::empty() const{
 }
 
 template< typename K, typename V>
-int PriorityQueue<K,V>::size() const{ // TODO int zamienić na size_type - coś nie chciało działać
+typename PriorityQueue<K,V>::size_type PriorityQueue<K,V>::size() const{ 
   return keys.size();
 }
 
 template< typename K, typename V>
 void PriorityQueue<K,V>::insert(K const & key, V const & value){
   //tu oczywiście też jest za dużo try-catch, ale to jest forma a nie treść.
-  qElement a;
+  qElement a (new std::pair<K,V>);
   typedef typename std::multiset<qElement, keysOrder >::iterator itek;
   itek atkeys;
-  a = new std::pair<K,V>;
   /*try{
     atkeys = new typename std::multiset<qElement, keysOrder >::iterator;
   }
@@ -288,7 +295,7 @@ void PriorityQueue<K,V>::insert(K const & key, V const & value){
     values.insert(a);
   }
   catch (...){
-    keys.erase(*atkeys);
+    keys.erase(atkeys); //tu powinno być bez gwiazdki!!! (przy poprawkach się zapodziała)
     //a->~pair();
     delete a;
     //atkeys->~itek();
@@ -299,7 +306,7 @@ void PriorityQueue<K,V>::insert(K const & key, V const & value){
   delete a;
   //atkeys->~itek();
   //delete atkeys;
-  
+
    /*
    qElement a= new std::pair<K,V>; //po co tworzyć taką pustą parę, skoro za chwilę tworzymy inną?
    *a = std::make_pair(key, value);
@@ -335,8 +342,8 @@ K const & PriorityQueue<K,V>::maxKey() const{
 template< typename K, typename V>
 void PriorityQueue<K,V>::merge(PriorityQueue<K, V> & queue){
   int i,j = queue.size(), done;
-  typedef typename std::multiset<qElement, keysOrder >::iterator itek1;
-  typedef typename std::multiset<qElement, valuesOrder >::iterator itek2;
+  typedef typename std::set<qElement, keysOrder >::iterator itek1;
+  typedef typename std::set<qElement, valuesOrder >::iterator itek2;
   itek1* otherkeys;
 
   itek1** tabk;
@@ -400,6 +407,7 @@ void PriorityQueue<K,V>::merge(PriorityQueue<K, V> & queue){
   delete[] tabk;
   delete[] tabv;
 }
+
 
 template< typename K, typename V>
 void PriorityQueue<K,V>::swap(PriorityQueue<K, V> & queue){
