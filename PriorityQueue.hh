@@ -22,7 +22,7 @@ template <typename K, typename V>
 class PriorityQueue;
 
 template <typename K, typename V>
-bool operator==(PriorityQueue<K, V> & queue0, PriorityQueue<K, V> & queue);
+bool operator<(PriorityQueue<K, V> & queue0, PriorityQueue<K, V> & queue);
 
 
 template <typename K, typename V>
@@ -121,9 +121,11 @@ class PriorityQueue {
     
     void merge(PriorityQueue<K, V> & queue);
    
-    void swap(PriorityQueue<K, V> & queue);
+    void swap(PriorityQueue<K, V> & queue) throw();
 
-    friend bool operator==<K,V>(PriorityQueue<K, V> & queue0, PriorityQueue<K, V> & queue);
+    friend bool operator< <K,V>(PriorityQueue<K, V> & queue0,
+                                PriorityQueue<K, V> & queue);
+    //pozostałe operatory generujemy z pomocą tego jednego
 } ;
 
 
@@ -213,7 +215,7 @@ V const & PriorityQueue<K,V>::minValue() const{
 template< typename K, typename V>
 V const & PriorityQueue<K,V>::maxValue() const{
    if (keys.empty()) throw emptyException;
-   return (*values.end())->second; 
+   return (*--values.end())->second; 
 }
 
 template< typename K, typename V>
@@ -225,7 +227,7 @@ K const & PriorityQueue<K,V>::minKey() const{
 template< typename K, typename V>
 K const & PriorityQueue<K,V>::maxKey() const{
    if (keys.empty()) throw emptyException;
-   return (*values.end())->first; 
+   return (*--values.end())->first; 
 }
 
 template< typename K, typename V>
@@ -316,7 +318,7 @@ void PriorityQueue<K,V>::deleteMax(){
   if (keys.empty()) throw emptyException;
 
   typedef typename std::set<qElement, keysOrder >::iterator itek;
-  itek i = values.end();
+  itek i = --values.end();
   keys.erase(*i); //usuwamy poprzez wartość, może się sypnąć
   values.erase(i); //to się już uda, bo usuwamy poprzez iterator
 }
@@ -328,13 +330,7 @@ void swap(PriorityQueue<K, V> & queue0, PriorityQueue<K, V> & queue) throw(){
 
 template< typename K, typename V>
 bool operator==(PriorityQueue<K, V> & queue0, PriorityQueue<K, V> & queue){
-  return (!lexicographical_compare (queue0.keys.begin(), queue0.keys.end(),
-                                 queue.keys.begin(), queue.keys.end(),
-                                 keysOrder0)
-          &&
-          !lexicographical_compare (queue.keys.begin(), queue.keys.end(),
-                                 queue0.keys.begin(), queue0.keys.end(),
-                                 keysOrder0))
+  return (!(queue0<queue) && !(queue<queue0));
  /*można przepisać z użyciem:
  bool equal ( InputIterator1 first1, InputIterator1 last1,
                InputIterator2 first2, BinaryPredicate pred );
@@ -351,7 +347,7 @@ template< typename K, typename V>
 bool operator<=(PriorityQueue<K, V> & queue0, PriorityQueue<K, V> & queue){
   return (queue0 < queue || queue0==queue);
   //oczywiście można przepisać wprost i będzie optymalniej bo będą 2 porównania\
-    zamiast 3 (dwóch takich samych)
+    zamiast 3 (dwóch takich samych) (wymagałoby to friend)
 }
 
 template< typename K, typename V>
@@ -363,7 +359,7 @@ template< typename K, typename V>
 bool operator<(PriorityQueue<K, V> & queue0, PriorityQueue<K, V> & queue){
   return lexicographical_compare (queue0.keys.begin(), queue0.keys.end(),
                                  queue.keys.begin(), queue.keys.end(),
-                                 keysOrder0)
+                                 typename PriorityQueue<K, V>::keysOrder0() );
 }
 
 template< typename K, typename V>
