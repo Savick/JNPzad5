@@ -5,9 +5,12 @@
 #include<utility>
 #include<algorithm>
 #include<boost/shared_ptr.hpp>
+#include<boost/scoped_ptr.hpp>
 
 // Covention: 2 spaces, no tabs
 #include <exception>
+
+#include <iostream> //chwilowo
 
 class PriorityQueueEmptyException: public std::exception {};
 class PriorityQueueNotFoundException: public std::exception {};
@@ -155,14 +158,15 @@ void PriorityQueue<K,V>::copyQElement(qElement a){
 
 template< typename K, typename V>
 PriorityQueue<K,V>::PriorityQueue(PriorityQueue<K, V> const & queue){
+
  typename std::set<qElement, keysOrder >::const_iterator p = queue.keys.begin();
  typename std::set<qElement, keysOrder >::const_iterator k = queue.keys.end();
 
  typedef typename std::set<qElement, valuesOrder >::iterator two;
  typedef typename std::set<qElement, keysOrder >::iterator one;
 
- one kinput;
- two vinput; //optymalizują działanie.
+ one kinput = keys.begin();
+ two vinput = values.begin(); //optymalizują działanie.
  for ( ; p!=k; ++p ){
    //fragment niemal żywcem z funkcji copy:
    qElement b (new std::pair<K,V>);
@@ -235,7 +239,8 @@ void PriorityQueue<K,V>::merge(PriorityQueue<K, V> & queue){
   int i,j = queue.size(), done;
   typedef typename std::set<qElement, keysOrder >::iterator itek1;
   typedef typename std::set<qElement, valuesOrder >::iterator itek2;
-  itek1* otherkeys;
+  boost::scoped_ptr< itek1 > otherkeys ( new itek1 ); //tę pamięć trzeba będzie zwolnić!
+  //już nie, bo mamy boosta^^
 
   itek1** tabk;
   itek2** tabv;
@@ -255,15 +260,18 @@ void PriorityQueue<K,V>::merge(PriorityQueue<K, V> & queue){
     *otherkeys = queue.keys.begin();
     done = 0;
     for(i=0; i<j; ++i){
-      ++(*otherkeys);
       tabk[i] = new itek1;
+      //std::cout << i << ":)cokolwiek" << std::endl;
       done = 1;
       *tabk[i]=keys.insert(**otherkeys).first;
       done = 2;
+      //std::cout << i << ":)half" << std::endl;
       tabv[i] = new itek2;
       done = 3;
       *tabv[i]=values.insert(**otherkeys).first;
       done = 0;
+      ++(*otherkeys);
+      //std::cout << i << ":)!" << std::endl;
     }
     //to już jest bezpieczne:
     queue.keys.clear();
@@ -286,6 +294,7 @@ void PriorityQueue<K,V>::merge(PriorityQueue<K, V> & queue){
     delete[] tabv;
     throw;
   }
+
   --i; //bo było j.
   for(; i>=0; --i){
     delete tabk[i];
@@ -304,7 +313,7 @@ void PriorityQueue<K,V>::swap(PriorityQueue<K, V> & queue) throw(){
 
 template <typename K, typename V>
 void PriorityQueue<K,V>::deleteMin(){
-  if (keys.empty()) throw emptyException;
+  if (keys.empty()) return;
  
   typedef typename std::set<qElement, keysOrder >::iterator itek;
 
@@ -315,7 +324,7 @@ void PriorityQueue<K,V>::deleteMin(){
 
 template <typename K, typename V>
 void PriorityQueue<K,V>::deleteMax(){
-  if (keys.empty()) throw emptyException;
+  if (keys.empty()) return;
 
   typedef typename std::set<qElement, keysOrder >::iterator itek;
   itek i = --values.end();
